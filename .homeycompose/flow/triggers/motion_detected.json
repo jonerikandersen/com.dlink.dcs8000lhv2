@@ -1,0 +1,6 @@
+{
+  "title": { "en": "Motion detected" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=camera" }
+  ]
+}

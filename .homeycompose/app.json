@@ -1,0 +1,32 @@
+{
+  "id": "com.dlink.dcs8000lhv2",
+  "version": "0.1.0",
+  "compatibility": ">=12.0.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "brandColor": "#1e5aa0",
+  "name": {
+    "en": "D-Link DCS-8000LHV2",
+    "no": "D-Link DCS-8000LHV2"
+  },
+  "description": {
+    "en": "Local control of the D-Link DCS-8000LHV2 Mini HD Pan & Tilt camera. Live RTSP stream, snapshots, motion alerts via ONVIF, and PTZ control. Enable Local Access (RTSP) in the mydlink app first.",
+    "no": "Lokal styring av D-Link DCS-8000LHV2 Mini HD Pan & Tilt-kamera. Live RTSP-stream, snapshots, bevegelses-varsler via ONVIF, og PTZ-styring. Aktiver Local Access (RTSP) i mydlink-appen først."
+  },
+  "category": [
+    "video"
+  ],
+  "tags": {
+    "en": [ "d-link", "dlink", "dcs-8000lhv2", "camera", "rtsp", "onvif", "mydlink" ]
+  },
+  "author": {
+    "name": "Lokale Helter"
+  },
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png"
+  }
+}

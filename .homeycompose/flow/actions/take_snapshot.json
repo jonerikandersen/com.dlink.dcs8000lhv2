@@ -1,0 +1,10 @@
+{
+  "title": { "en": "Take snapshot" },
+  "titleFormatted": { "en": "Take a snapshot from [[device]]" },
+  "args": [
+    { "name": "device", "type": "device", "filter": "driver_id=camera" }
+  ],
+  "tokens": [
+    { "name": "image", "type": "image", "title": { "en": "Snapshot" } }
+  ]
+}

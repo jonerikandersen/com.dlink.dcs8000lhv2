@@ -1,0 +1,8 @@
+{
+  "type": "boolean",
+  "title": { "en": "Pan right", "no": "Vipp høyre" },
+  "uiComponent": "button",
+  "getable": false,
+  "setable": true,
+  "icon": "/assets/capabilities/right.svg"
+}

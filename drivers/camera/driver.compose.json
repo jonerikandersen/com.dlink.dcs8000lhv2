@@ -1,0 +1,108 @@
+{
+  "name": {
+    "en": "D-Link Camera",
+    "no": "D-Link kamera"
+  },
+  "description": {
+    "en": "A DCS-8000LHV2 camera. Live RTSP video, snapshots, motion alarm via ONVIF. Enable Local Access (RTSP) in the mydlink app before pairing.",
+    "no": "Et DCS-8000LHV2-kamera. Live RTSP-video, snapshots, bevegelses-alarm via ONVIF. Aktiver Local Access (RTSP) i mydlink-appen før paring."
+  },
+  "class": "camera",
+  "capabilities": [
+    "alarm_motion",
+    "button_up",
+    "button_down",
+    "button_left",
+    "button_right",
+    "button_home",
+    "button_snapshot"
+  ],
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
+  "images": {
+    "small": "/drivers/camera/assets/images/small.png",
+    "large": "/drivers/camera/assets/images/large.png"
+  },
+  "pair": [
+    {
+      "id": "connect",
+      "navigation": { "next": "preview" }
+    },
+    {
+      "id": "preview",
+      "navigation": { "next": "list_devices" }
+    },
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": { "next": "add_devices" }
+    },
+    {
+      "id": "add_devices",
+      "template": "add_devices"
+    }
+  ],
+  "settings": [
+    {
+      "id": "ip",
+      "type": "text",
+      "value": "",
+      "label": { "en": "IP address" },
+      "hint":  { "en": "Update if the camera's IP changes (use a DHCP reservation for stability)" }
+    },
+    {
+      "id": "rtsp_user",
+      "type": "text",
+      "value": "admin",
+      "label": { "en": "Username" },
+      "hint":  { "en": "Always 'admin' on DCS-8000LHV2 — don't change unless you know why" }
+    },
+    {
+      "id": "rtsp_password",
+      "type": "text",
+      "value": "",
+      "label": { "en": "PIN" },
+      "hint":  { "en": "The 6-digit PIN printed on the camera. Used for RTSP, snapshots and ONVIF." }
+    },
+    {
+      "id": "profile",
+      "type": "dropdown",
+      "value": "profile.0",
+      "label": { "en": "Stream profile" },
+      "hint":  { "en": "profile.0 = 1080p, profile.1 = 720p (lower bandwidth)" },
+      "values": [
+        { "id": "profile.0", "label": { "en": "1080p (profile.0)" } },
+        { "id": "profile.1", "label": { "en": "720p (profile.1)" } }
+      ]
+    },
+    {
+      "id": "snapshot_interval_s",
+      "type": "number",
+      "value": 30,
+      "min": 5,
+      "max": 600,
+      "label": { "en": "Snapshot interval (seconds)" },
+      "hint":  { "en": "How often to refresh the thumbnail. Higher = less network traffic." }
+    },
+    {
+      "id": "onvif_port",
+      "type": "number",
+      "value": 80,
+      "min": 1,
+      "max": 65535,
+      "label": { "en": "ONVIF port" },
+      "hint":  { "en": "Default 80 for D-Link. Adjust only if you have non-default port mapping." }
+    },
+    {
+      "id": "onvif_enabled",
+      "type": "checkbox",
+      "value": true,
+      "label": { "en": "Enable motion detection via ONVIF" },
+      "hint":  { "en": "Subscribe to motion events. Requires camera to expose ONVIF." }
+    }
+  ]
+}

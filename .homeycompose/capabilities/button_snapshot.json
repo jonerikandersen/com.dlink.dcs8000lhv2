@@ -1,0 +1,8 @@
+{
+  "type": "boolean",
+  "title": { "en": "Refresh snapshot", "no": "Oppdater snapshot" },
+  "uiComponent": "button",
+  "getable": false,
+  "setable": true,
+  "icon": "/assets/capabilities/snapshot.svg"
+}
