@@ -1,8 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Pan up", "no": "Vipp opp" },
-  "uiComponent": "button",
-  "getable": false,
-  "setable": true,
-  "icon": "/assets/capabilities/up.svg"
-}

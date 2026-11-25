@@ -85,3 +85,15 @@ Vi har:
 - Fungerende Digest-auth snapshot-lib bevist mot kamera <lokal-ip>
 - Forenklet 3-stegs pair-flyt: IP+PIN → preview → add
 - WS-Discovery droppet (port stengt, ville bare forvirret brukere)
+
+## Oppdatering 2026-11-25
+
+Testet på nytt mot kameraet (<lokal-ip>, firmware 1.05.03):
+
+- **Ingen PTZ.** DCS-8000LHV2 er fastmontert. ONVIF tilbyr bare device, media, events og imaging. `/onvif/ptz_service` svarer 200 med tom kropp. PTZ-radene over er feil.
+- **Motion har aldri virket i 0.1.** `onvif`-pakken sender ikke WS-Addressing-headere, og kameraet avviser hendelseskallene ("A required header representing a Message Addressing Property is not present"). 0.2 har en egen SOAP-klient (`lib/onvif-events.js`).
+- `To`-headeren må være `http://<ip>/onvif/event_service` uten `:80`, ellers 500 "No route can be determined".
+- POST uten kropp gir 500 i stedet for 401, så curl `--digest` kommer aldri til autentiseringen.
+- Ett hendelsesemne, `Event`, med strengfeltet `Event`. Pull-point holdt stabilt i tre minutter uten hendelser (ingen hjemme). Payloaden ved bevegelse er ikke sett.
+- RTSP bruker Digest (realm `LIVE555 Streaming Media`). profile.0 og profile.1 gir H.264 + AAC 16 kHz.
+- `/common/info.cgi` (NIPCA 1.9.7) svarer uten innlogging og viser blant annet `pir=no`, `speaker=no`, `mic=yes`, `ir=yes`.

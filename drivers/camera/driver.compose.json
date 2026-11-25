@@ -4,17 +4,12 @@
     "no": "D-Link kamera"
   },
   "description": {
-    "en": "A DCS-8000LHV2 camera. Live RTSP video, snapshots, motion alarm via ONVIF. Enable Local Access (RTSP) in the mydlink app before pairing.",
-    "no": "Et DCS-8000LHV2-kamera. Live RTSP-video, snapshots, bevegelses-alarm via ONVIF. Aktiver Local Access (RTSP) i mydlink-appen før paring."
+    "en": "A DCS-8000LHV2 camera. Live RTSP video, snapshots and a motion alarm via ONVIF events. Enable Local Access (RTSP) in the mydlink app before pairing.",
+    "no": "Et DCS-8000LHV2-kamera. Live RTSP-video, snapshots og bevegelsesalarm via ONVIF-hendelser. Aktiver Local Access (RTSP) i mydlink-appen før paring."
   },
   "class": "camera",
   "capabilities": [
     "alarm_motion",
-    "button_up",
-    "button_down",
-    "button_left",
-    "button_right",
-    "button_home",
     "button_snapshot"
   ],
   "platforms": [
@@ -30,16 +25,22 @@
   "pair": [
     {
       "id": "connect",
-      "navigation": { "next": "preview" }
+      "navigation": {
+        "next": "preview"
+      }
     },
     {
       "id": "preview",
-      "navigation": { "next": "list_devices" }
+      "navigation": {
+        "next": "list_devices"
+      }
     },
     {
       "id": "list_devices",
       "template": "list_devices",
-      "navigation": { "next": "add_devices" }
+      "navigation": {
+        "next": "add_devices"
+      }
     },
     {
       "id": "add_devices",
@@ -51,32 +52,58 @@
       "id": "ip",
       "type": "text",
       "value": "",
-      "label": { "en": "IP address" },
-      "hint":  { "en": "Update if the camera's IP changes (use a DHCP reservation for stability)" }
+      "label": {
+        "en": "IP address"
+      },
+      "hint": {
+        "en": "Update if the camera's IP changes (use a DHCP reservation for stability)"
+      }
     },
     {
       "id": "rtsp_user",
       "type": "text",
       "value": "admin",
-      "label": { "en": "Username" },
-      "hint":  { "en": "Always 'admin' on DCS-8000LHV2 — don't change unless you know why" }
+      "label": {
+        "en": "Username"
+      },
+      "hint": {
+        "en": "Always 'admin' on DCS-8000LHV2 — don't change unless you know why"
+      }
     },
     {
       "id": "rtsp_password",
-      "type": "text",
+      "type": "password",
       "value": "",
-      "label": { "en": "PIN" },
-      "hint":  { "en": "The 6-digit PIN printed on the camera. Used for RTSP, snapshots and ONVIF." }
+      "label": {
+        "en": "PIN"
+      },
+      "hint": {
+        "en": "The 6-digit PIN printed on the camera. Used for RTSP, snapshots and ONVIF events."
+      }
     },
     {
       "id": "profile",
       "type": "dropdown",
       "value": "profile.0",
-      "label": { "en": "Stream profile" },
-      "hint":  { "en": "profile.0 = 1080p, profile.1 = 720p (lower bandwidth)" },
+      "label": {
+        "en": "Stream profile"
+      },
+      "hint": {
+        "en": "profile.0 = 1080p, profile.1 = 720p (lower bandwidth)"
+      },
       "values": [
-        { "id": "profile.0", "label": { "en": "1080p (profile.0)" } },
-        { "id": "profile.1", "label": { "en": "720p (profile.1)" } }
+        {
+          "id": "profile.0",
+          "label": {
+            "en": "1080p (profile.0)"
+          }
+        },
+        {
+          "id": "profile.1",
+          "label": {
+            "en": "720p (profile.1)"
+          }
+        }
       ]
     },
     {
@@ -85,24 +112,39 @@
       "value": 30,
       "min": 5,
       "max": 600,
-      "label": { "en": "Snapshot interval (seconds)" },
-      "hint":  { "en": "How often to refresh the thumbnail. Higher = less network traffic." }
-    },
-    {
-      "id": "onvif_port",
-      "type": "number",
-      "value": 80,
-      "min": 1,
-      "max": 65535,
-      "label": { "en": "ONVIF port" },
-      "hint":  { "en": "Default 80 for D-Link. Adjust only if you have non-default port mapping." }
+      "label": {
+        "en": "Snapshot interval (seconds)"
+      },
+      "hint": {
+        "en": "How often to refresh the thumbnail. Higher = less network traffic."
+      }
     },
     {
       "id": "onvif_enabled",
       "type": "checkbox",
       "value": true,
-      "label": { "en": "Enable motion detection via ONVIF" },
-      "hint":  { "en": "Subscribe to motion events. Requires camera to expose ONVIF." }
+      "label": {
+        "en": "Motion detection"
+      },
+      "hint": {
+        "en": "Listen for motion events from the camera (ONVIF pull-point)."
+      }
+    },
+    {
+      "id": "motion_reset_s",
+      "type": "number",
+      "value": 30,
+      "min": 5,
+      "max": 600,
+      "units": {
+        "en": "s"
+      },
+      "label": {
+        "en": "Motion reset (seconds)"
+      },
+      "hint": {
+        "en": "How long the motion alarm stays on after the last motion event, in case the camera never reports that motion ended."
+      }
     }
   ]
 }

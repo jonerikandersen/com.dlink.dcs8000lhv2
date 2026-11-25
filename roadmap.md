@@ -139,24 +139,17 @@ Fase 5  → robusthet, reconnect, dokumentasjon
 
 Stopp etter hver fase, test mot kameraet, så neste.
 
-## Status (per 2026-05-25)
+## Status (per 2026-11-25)
 
 | Fase | Status |
 |---|---|
-| 0 | Skippet — protokollen er bevist gjennom community (HA-integrasjonen) |
-| 1 | **Ferdig** — RTSP-stream registrert |
-| 2 | **Ferdig** — snapshot-loop + ONVIF motion |
-| 3 | **Ferdig** — 6 PTZ-knapper + 2 flow-actions |
-| 4 | **Ferdig** — 5-stegs pair-flyt med ONVIF discovery + snapshot-preview |
-| 5 | **Delvis** — feilhåndtering på plass, reconnect-logikk er tynn |
+| 0 | **Ferdig.** Se `phase-0-findings.md`, inkludert oppdateringen 2026-11-25 |
+| 1 | **Ferdig.** RTSP verifisert mot kameraet (begge profiler) |
+| 2 | **Ferdig.** Snapshot-loop virker. Motion via egen ONVIF-klient, abonnement verifisert. Selve motion-payloaden er ikke sett ennå |
+| 3 | **Utgår.** Kameraet er fastmontert og har ingen PTZ. Knappene og `ptz_move` er fjernet i 0.2.0. `take_snapshot` beholdes |
+| 4 | **Delvis.** IP + PIN → forhåndsvisning → legg til. Discovery droppet (UDP 3702 er stengt) |
+| 5 | **Delvis.** Hendelsesløkken fornyer abonnementet og kobler til på nytt med backoff. Diagnoselogg i appinnstillingen `diag` |
 
-**Klar for `homey app install`** — verifisering på faktisk kamera gjenstår.
+## Neste
 
-## Det ene spørsmålet som styrer alt
-
-**Hvor stabil er ONVIF-subscriptionen på DCS-8000LHV2 over tid?**
-- Stabil → pull-point fungerer som primær motion-kilde
-- Ustabil → vi må polle motion-status via `GetEventProperties`, mindre elegant
-- Fungerer ikke i det hele tatt → vi mister motion-funksjonalitet og må bytte til polling av et annet endepunkt
-
-Avklares i første reelle testkjøring.
+Vift foran kameraet og les `diag`: hva sender kameraet i `Event` ved bevegelse, og kommer det en egen slutt-hendelse? Stram deretter inn tolkningen i `device.js` (`_onCameraEvent`).

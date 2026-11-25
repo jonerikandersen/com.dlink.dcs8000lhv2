@@ -8,9 +8,6 @@ class DlinkCameraDriver extends Homey.Driver {
 	async onInit() {
 		this.log('D-Link camera driver initialized');
 
-		this.homey.flow.getActionCard('ptz_move')
-			.registerRunListener(async ({ device, direction }) => device.ptz(direction));
-
 		this.homey.flow.getActionCard('take_snapshot')
 			.registerRunListener(async ({ device }) => {
 				const img = await device.takeSnapshot();
@@ -61,8 +58,8 @@ class DlinkCameraDriver extends Homey.Driver {
 					rtsp_password: state.pwd,
 					profile: state.profile,
 					snapshot_interval_s: 30,
-					onvif_port: 80,
 					onvif_enabled: true,
+					motion_reset_s: 30,
 				},
 			}];
 		});

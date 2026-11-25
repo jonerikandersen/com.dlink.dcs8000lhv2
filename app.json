@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.dlink.dcs8000lhv2",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "compatibility": ">=12.0.0",
   "sdk": 3,
   "platforms": [
@@ -13,8 +13,8 @@
     "no": "D-Link DCS-8000LHV2"
   },
   "description": {
-    "en": "Local control of the D-Link DCS-8000LHV2 Mini HD Pan & Tilt camera. Live RTSP stream, snapshots, motion alerts via ONVIF, and PTZ control. Enable Local Access (RTSP) in the mydlink app first.",
-    "no": "Lokal styring av D-Link DCS-8000LHV2 Mini HD Pan & Tilt-kamera. Live RTSP-stream, snapshots, bevegelses-varsler via ONVIF, og PTZ-styring. Aktiver Local Access (RTSP) i mydlink-appen først."
+    "en": "Local control of the D-Link DCS-8000LHV2 Mini Full HD camera: live RTSP stream, snapshots and motion alerts via ONVIF events. Enable Local Access (RTSP) in the mydlink app first.",
+    "no": "Lokal styring av D-Link DCS-8000LHV2 Mini Full HD-kamera: live RTSP-stream, snapshots og bevegelsesvarsler via ONVIF-hendelser. Aktiver Local Access (RTSP) i mydlink-appen først."
   },
   "category": [
     "video"
@@ -57,58 +57,6 @@
     "actions": [
       {
         "title": {
-          "en": "Pan/Tilt camera"
-        },
-        "titleFormatted": {
-          "en": "Move camera [[direction]]"
-        },
-        "args": [
-          {
-            "name": "device",
-            "type": "device",
-            "filter": "driver_id=camera"
-          },
-          {
-            "name": "direction",
-            "type": "dropdown",
-            "values": [
-              {
-                "id": "up",
-                "label": {
-                  "en": "Up"
-                }
-              },
-              {
-                "id": "down",
-                "label": {
-                  "en": "Down"
-                }
-              },
-              {
-                "id": "left",
-                "label": {
-                  "en": "Left"
-                }
-              },
-              {
-                "id": "right",
-                "label": {
-                  "en": "Right"
-                }
-              },
-              {
-                "id": "home",
-                "label": {
-                  "en": "Home (center)"
-                }
-              }
-            ]
-          }
-        ],
-        "id": "ptz_move"
-      },
-      {
-        "title": {
           "en": "Take snapshot"
         },
         "titleFormatted": {
@@ -141,17 +89,12 @@
         "no": "D-Link kamera"
       },
       "description": {
-        "en": "A DCS-8000LHV2 camera. Live RTSP video, snapshots, motion alarm via ONVIF. Enable Local Access (RTSP) in the mydlink app before pairing.",
-        "no": "Et DCS-8000LHV2-kamera. Live RTSP-video, snapshots, bevegelses-alarm via ONVIF. Aktiver Local Access (RTSP) i mydlink-appen før paring."
+        "en": "A DCS-8000LHV2 camera. Live RTSP video, snapshots and a motion alarm via ONVIF events. Enable Local Access (RTSP) in the mydlink app before pairing.",
+        "no": "Et DCS-8000LHV2-kamera. Live RTSP-video, snapshots og bevegelsesalarm via ONVIF-hendelser. Aktiver Local Access (RTSP) i mydlink-appen før paring."
       },
       "class": "camera",
       "capabilities": [
         "alarm_motion",
-        "button_up",
-        "button_down",
-        "button_left",
-        "button_right",
-        "button_home",
         "button_snapshot"
       ],
       "platforms": [
@@ -214,13 +157,13 @@
         },
         {
           "id": "rtsp_password",
-          "type": "text",
+          "type": "password",
           "value": "",
           "label": {
             "en": "PIN"
           },
           "hint": {
-            "en": "The 6-digit PIN printed on the camera. Used for RTSP, snapshots and ONVIF."
+            "en": "The 6-digit PIN printed on the camera. Used for RTSP, snapshots and ONVIF events."
           }
         },
         {
@@ -262,27 +205,30 @@
           }
         },
         {
-          "id": "onvif_port",
-          "type": "number",
-          "value": 80,
-          "min": 1,
-          "max": 65535,
-          "label": {
-            "en": "ONVIF port"
-          },
-          "hint": {
-            "en": "Default 80 for D-Link. Adjust only if you have non-default port mapping."
-          }
-        },
-        {
           "id": "onvif_enabled",
           "type": "checkbox",
           "value": true,
           "label": {
-            "en": "Enable motion detection via ONVIF"
+            "en": "Motion detection"
           },
           "hint": {
-            "en": "Subscribe to motion events. Requires camera to expose ONVIF."
+            "en": "Listen for motion events from the camera (ONVIF pull-point)."
+          }
+        },
+        {
+          "id": "motion_reset_s",
+          "type": "number",
+          "value": 30,
+          "min": 5,
+          "max": 600,
+          "units": {
+            "en": "s"
+          },
+          "label": {
+            "en": "Motion reset (seconds)"
+          },
+          "hint": {
+            "en": "How long the motion alarm stays on after the last motion event, in case the camera never reports that motion ended."
           }
         }
       ],
@@ -290,50 +236,6 @@
     }
   ],
   "capabilities": {
-    "button_down": {
-      "type": "boolean",
-      "title": {
-        "en": "Pan down",
-        "no": "Vipp ned"
-      },
-      "uiComponent": "button",
-      "getable": false,
-      "setable": true,
-      "icon": "/assets/capabilities/down.svg"
-    },
-    "button_home": {
-      "type": "boolean",
-      "title": {
-        "en": "Home position",
-        "no": "Hjemmeposisjon"
-      },
-      "uiComponent": "button",
-      "getable": false,
-      "setable": true,
-      "icon": "/assets/capabilities/home.svg"
-    },
-    "button_left": {
-      "type": "boolean",
-      "title": {
-        "en": "Pan left",
-        "no": "Vipp venstre"
-      },
-      "uiComponent": "button",
-      "getable": false,
-      "setable": true,
-      "icon": "/assets/capabilities/left.svg"
-    },
-    "button_right": {
-      "type": "boolean",
-      "title": {
-        "en": "Pan right",
-        "no": "Vipp høyre"
-      },
-      "uiComponent": "button",
-      "getable": false,
-      "setable": true,
-      "icon": "/assets/capabilities/right.svg"
-    },
     "button_snapshot": {
       "type": "boolean",
       "title": {
@@ -344,17 +246,6 @@
       "getable": false,
       "setable": true,
       "icon": "/assets/capabilities/snapshot.svg"
-    },
-    "button_up": {
-      "type": "boolean",
-      "title": {
-        "en": "Pan up",
-        "no": "Vipp opp"
-      },
-      "uiComponent": "button",
-      "getable": false,
-      "setable": true,
-      "icon": "/assets/capabilities/up.svg"
     }
   }
 }

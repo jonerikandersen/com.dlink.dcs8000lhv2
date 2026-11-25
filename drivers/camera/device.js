@@ -2,69 +2,91 @@
 
 const Homey = require('homey');
 const { fetchSnapshot } = require('../../lib/snapshot');
-const { OnvifClient } = require('../../lib/onvif-client');
+const { OnvifEvents } = require('../../lib/onvif-events');
 
 class DlinkCameraDevice extends Homey.Device {
 
+	// Log to stdout and to the app's "diag" setting (see app.js).
+	log(...args) {
+		const app = this.homey.app;
+		if (app && typeof app.diag === 'function') app.diag(`[${this.getName()}]`, ...args);
+		else super.log(...args);
+	}
+
 	async onInit() {
+		try {
+			await this._init();
+		} catch (e) {
+			this.log(`init failed: ${e.stack || e.message}`);
+			throw e;
+		}
+	}
+
+	async _init() {
 		this._snapshotImage = null;
 		this._video = null;
-		this._onvif = null;
+		// Not "_events": that is EventEmitter's own listener map on Homey.Device.
+		this._eventClient = null;
 		this._snapshotTimer = null;
+		this._motionResetTimer = null;
+
+		this._motionTrigger = this.homey.flow.getDeviceTriggerCard('motion_detected');
 
 		await this._setupVideoStream();
 		await this._setupSnapshot();
-		await this._setupOnvif();
+		this._startEvents();
 
-		this._motionTrigger = this.homey.flow.getTriggerCard('motion_detected');
-
-		// PTZ buttons on the device tile
-		this.registerCapabilityListener('button_up',       () => this._safePtz('up'));
-		this.registerCapabilityListener('button_down',     () => this._safePtz('down'));
-		this.registerCapabilityListener('button_left',     () => this._safePtz('left'));
-		this.registerCapabilityListener('button_right',    () => this._safePtz('right'));
-		this.registerCapabilityListener('button_home',     () => this._safePtz('home'));
 		this.registerCapabilityListener('button_snapshot', () => this._refreshSnapshotOnce());
 
 		this.log(`D-Link camera ready: ${this.getName()} @ ${this.getSetting('ip')}`);
 	}
 
-	async _safePtz(dir) {
-		try {
-			await this.ptz(dir);
-		} catch (e) {
-			this.log(`PTZ ${dir} failed: ${e.message}`);
-			throw new Error(e.message);
-		}
+	async onUninit() {
+		await this._teardown();
 	}
 
 	async onDeleted() {
-		this._stopSnapshot();
-		if (this._onvif) {
-			this._onvif.stopMotion();
-			this._onvif = null;
-		}
+		await this._teardown();
 		if (this._video) {
 			try { await this.homey.videos.unregisterVideo(this._video); } catch (_) { /* ignore */ }
 			this._video = null;
 		}
 	}
 
+	async _teardown() {
+		this._stopSnapshot();
+		this._clearMotionReset();
+		if (this._eventClient) {
+			const client = this._eventClient;
+			this._eventClient = null;
+			await client.stop().catch(() => {});
+		}
+	}
+
 	async onSettings({ changedKeys }) {
 		if (changedKeys.includes('snapshot_interval_s')) {
 			this._stopSnapshot();
-			this._startSnapshotLoop();
+			// Wait for the new value to be stored before restarting the loop.
+			this.homey.setTimeout(() => this._startSnapshotLoop(), 500);
 		}
-		if (changedKeys.some((k) => ['ip', 'rtsp_user', 'rtsp_password', 'profile'].includes(k))) {
-			// Video URL listener reads settings live, so just trigger a refresh
-			// by registering a new image too.
-			await this._refreshSnapshotOnce().catch(() => {});
+		if (changedKeys.some((k) => ['ip', 'rtsp_user', 'rtsp_password'].includes(k))) {
+			this.homey.setTimeout(() => this._refreshSnapshotOnce().catch(() => {}), 500);
 		}
-		if (changedKeys.some((k) => ['ip', 'rtsp_user', 'rtsp_password', 'onvif_port', 'onvif_enabled'].includes(k))) {
-			if (this._onvif) this._onvif.stopMotion();
-			this._onvif = null;
-			await this._setupOnvif();
+		if (changedKeys.some((k) => ['ip', 'rtsp_user', 'rtsp_password', 'onvif_enabled'].includes(k))) {
+			if (this._eventClient) {
+				await this._eventClient.stop().catch(() => {});
+				this._eventClient = null;
+			}
+			this.homey.setTimeout(() => this._startEvents(), 500);
 		}
+	}
+
+	_credentials() {
+		return {
+			ip: this.getSetting('ip'),
+			user: this.getSetting('rtsp_user') || 'admin',
+			pwd: this.getSetting('rtsp_password') || '',
+		};
 	}
 
 	// ---- RTSP stream ----
@@ -72,21 +94,17 @@ class DlinkCameraDevice extends Homey.Device {
 	async _setupVideoStream() {
 		try {
 			this._video = await this.homey.videos.createVideoRTSP();
-			this._video.registerVideoUrlListener(async () => {
-				return { url: this._rtspUrl() };
-			});
-			await this.setCameraVideo('rtsp', 'Live stream', this._video);
+			this._video.registerVideoUrlListener(async () => ({ url: this._rtspUrl() }));
+			await this.setCameraVideo('rtsp', 'Live', this._video);
 		} catch (e) {
 			this.log(`Failed to set up RTSP video: ${e.message}`);
 		}
 	}
 
 	_rtspUrl() {
-		const ip = this.getSetting('ip');
-		const user = encodeURIComponent(this.getSetting('rtsp_user') || 'admin');
-		const pwd = encodeURIComponent(this.getSetting('rtsp_password') || '');
+		const { ip, user, pwd } = this._credentials();
 		const profile = this.getSetting('profile') || 'profile.0';
-		return `rtsp://${user}:${pwd}@${ip}:554/live/${profile}`;
+		return `rtsp://${encodeURIComponent(user)}:${encodeURIComponent(pwd)}@${ip}:554/live/${profile}`;
 	}
 
 	// ---- snapshot image ----
@@ -94,14 +112,7 @@ class DlinkCameraDevice extends Homey.Device {
 	async _setupSnapshot() {
 		try {
 			this._snapshotImage = await this.homey.images.createImage();
-			this._snapshotImage.setStream(async (stream) => {
-				const buf = await fetchSnapshot({
-					ip: this.getSetting('ip'),
-					user: this.getSetting('rtsp_user') || 'admin',
-					pwd: this.getSetting('rtsp_password') || '',
-				});
-				stream.end(buf);
-			});
+			this._snapshotImage.setStream(async (stream) => stream.end(await fetchSnapshot(this._credentials())));
 			await this.setCameraImage('snapshot', 'Latest snapshot', this._snapshotImage);
 		} catch (e) {
 			this.log(`Failed to set up snapshot image: ${e.message}`);
@@ -113,7 +124,6 @@ class DlinkCameraDevice extends Homey.Device {
 		if (this._snapshotTimer) return;
 		const interval = Math.max(5, this.getSetting('snapshot_interval_s') || 30) * 1000;
 		this._snapshotTimer = this.homey.setInterval(() => this._refreshSnapshotOnce().catch(() => {}), interval);
-		// fire once immediately so the device gets a thumbnail right away
 		this.homey.setTimeout(() => this._refreshSnapshotOnce().catch(() => {}), 1500);
 	}
 
@@ -135,61 +145,61 @@ class DlinkCameraDevice extends Homey.Device {
 		}
 	}
 
+	// Used by the flow action 'take_snapshot': a fresh image token.
 	async takeSnapshot() {
-		// Used by flow action 'take_snapshot' — returns a fresh Image token
 		const img = await this.homey.images.createImage();
-		img.setStream(async (stream) => {
-			const buf = await fetchSnapshot({
-				ip: this.getSetting('ip'),
-				user: this.getSetting('rtsp_user') || 'admin',
-				pwd: this.getSetting('rtsp_password') || '',
-			});
-			stream.end(buf);
-		});
+		const buf = await fetchSnapshot(this._credentials());
+		img.setStream(async (stream) => stream.end(buf));
 		await img.update();
 		return img;
 	}
 
-	// ---- ONVIF (motion + PTZ) ----
+	// ---- motion via ONVIF events ----
 
-	async _setupOnvif() {
-		if (!this.getSetting('onvif_enabled')) return;
-		const client = new OnvifClient({
-			ip:   this.getSetting('ip'),
-			port: this.getSetting('onvif_port') || 80,
-			user: this.getSetting('rtsp_user') || 'admin',
-			pwd:  this.getSetting('rtsp_password') || '',
-			log:  (...a) => this.log(...a),
-		});
-		try {
-			await client.connect();
-		} catch (e) {
-			this.log(`ONVIF connect failed: ${e.message} — motion + PTZ disabled`);
-			return;
-		}
-
-		this._onvif = client;
-
-		try {
-			await client.subscribeMotion(async (active) => {
-				try {
-					await this.setCapabilityValue('alarm_motion', !!active);
-					if (active && this._motionTrigger) {
-						await this._motionTrigger.trigger(this, {}, {}).catch((e) => this.log(`motion trigger: ${e.message}`));
-					}
-				} catch (e) {
-					this.log(`motion handler: ${e.message}`);
-				}
-			});
-			this.log('ONVIF motion subscription active');
-		} catch (e) {
-			this.log(`ONVIF motion subscribe failed: ${e.message}`);
-		}
+	_startEvents() {
+		if (this._eventClient || !this.getSetting('onvif_enabled')) return;
+		const { ip, user, pwd } = this._credentials();
+		if (!ip || !pwd) return;
+		this._eventClient = new OnvifEvents({ ip, user, pwd, log: (...a) => this.log(...a) });
+		this._eventClient.start(
+			(n) => this._onCameraEvent(n),
+			(ok, err) => this.log(ok ? 'ONVIF events connected' : `ONVIF events lost: ${err ? err.message : 'unknown'}`),
+		);
 	}
 
-	async ptz(direction) {
-		if (!this._onvif) throw new Error('ONVIF not connected — PTZ unavailable');
-		return this._onvif.ptz(direction);
+	// The camera has a single topic ("Event") with a string item "Event". Until a
+	// motion payload has been seen on the real camera, anything mentioning motion
+	// counts, explicit false values end it, and every event is logged.
+	_onCameraEvent({ topic, source, data }) {
+		this.log(`camera event: ${topic} source=${JSON.stringify(source)} data=${JSON.stringify(data)}`);
+		const values = Object.values(data).map((v) => String(v));
+		const text = `${topic} ${values.join(' ')}`;
+		if (!/motion/i.test(text)) return;
+		const off = values.some((v) => /^(false|0|off|stop|end)$/i.test(v));
+		this._setMotion(!off);
+	}
+
+	async _setMotion(active) {
+		this._clearMotionReset();
+		const wasActive = this.getCapabilityValue('alarm_motion') === true;
+		await this.setCapabilityValue('alarm_motion', active).catch((e) => this.log(`alarm_motion: ${e.message}`));
+		if (!active) return;
+		if (!wasActive) {
+			await this._motionTrigger.trigger(this, {}, {}).catch((e) => this.log(`motion trigger: ${e.message}`));
+		}
+		// The camera may never send an explicit "motion ended", so reset after a while.
+		const resetS = Math.max(5, this.getSetting('motion_reset_s') || 30);
+		this._motionResetTimer = this.homey.setTimeout(() => {
+			this._motionResetTimer = null;
+			this.setCapabilityValue('alarm_motion', false).catch(() => {});
+		}, resetS * 1000);
+	}
+
+	_clearMotionReset() {
+		if (this._motionResetTimer) {
+			this.homey.clearTimeout(this._motionResetTimer);
+			this._motionResetTimer = null;
+		}
 	}
 
 }

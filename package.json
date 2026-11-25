@@ -1,11 +1,8 @@
 {
   "name": "com.dlink.dcs8000lhv2",
-  "version": "0.1.0",
-  "description": "Homey SDK3 app for D-Link DCS-8000LHV2 (mydlink Mini HD Pan & Tilt camera) — local RTSP + ONVIF",
+  "version": "0.2.0",
+  "description": "Homey SDK3 app for D-Link DCS-8000LHV2 (mydlink Mini Full HD camera): local RTSP, snapshots and ONVIF motion events",
   "main": "app.js",
-  "dependencies": {
-    "onvif": "^0.7.2"
-  },
   "scripts": {
     "validate": "homey app validate",
     "install-homey": "homey app install",

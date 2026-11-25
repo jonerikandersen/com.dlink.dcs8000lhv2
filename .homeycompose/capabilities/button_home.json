@@ -1,8 +1,0 @@
-{
-  "type": "boolean",
-  "title": { "en": "Home position", "no": "Hjemmeposisjon" },
-  "uiComponent": "button",
-  "getable": false,
-  "setable": true,
-  "icon": "/assets/capabilities/home.svg"
-}
